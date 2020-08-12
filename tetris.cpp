@@ -1,3 +1,4 @@
+#define UNICODE
 #include "iostream"
 #include "Windows.h"
 using namespace std;
@@ -6,7 +7,7 @@ int nFieldWidth = 12;
 int nFieldHeight = 18;
 int nScreenWidth = 80;
 int nScreenHeight = 30;
-unsigned char *pField = nullptr;
+unsigned char *pField = NULL;
 
 int rotate(int px,int py,int r){
   switch(r % 4){
@@ -73,5 +74,15 @@ int main(){
   DWORD dwBytesWritten = 0;
   //cout<<tetromino[0]<<endl;
 
+	bool bGameOver = false;
+	while(!bGameOver){
+		for(int x=0 ; x < nFieldWidth ; x++){
+   		 for(int y=0 ; y < nFieldHeight ; y++){
+      			screen[(y+2)*nScreenWidth+(x+2)]=L" ABCDEFG=#"[pField[(y*nFieldWidth)+x]];
+    		}
+  		}
+  		WriteConsoleOutputCharacter(hConsole,screen,nScreenWidth*nScreenHeight,{0,0},&dwBytesWritten);
+		break;
+	}
   return 0;
 }
