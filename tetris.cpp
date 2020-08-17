@@ -21,7 +21,7 @@ int rotate(int px,int py,int r){
 bool DoesPieceFit(int nTetromino,int nRotation,int nPosX,int nPosY){
   for(int px=0;px<4;px++){
     for(int py=0;py<4;py++){
-      int pi=rotate(nPosX,nPosY,nRotation);
+      int pi=rotate(px,py,nRotation);
       int fi=(nPosY+py)*nFieldWidth+(nPosX+px);
       if((nPosX+px)>=0 && (nPosX+px) < nFieldWidth){
         if((nPosY+py)>=0 && (nPosY+py) < nFieldHeight){
@@ -91,12 +91,15 @@ int main(){
   //cout<<tetromino[0]<<endl;
 
 	bool bGameOver = false;
-
+  bool brotateHold = false;
   int nCurrentPiece = 1;
   int nCurrentRotation = 0;
   int nCurrentX = (nFieldWidth)/2;
   int nCurrentY = 0;
   bool bKey[4];
+  int nSpeed=20;
+  int nSpeedCounter=0;
+  bool bForceDown=false;
 	while(!bGameOver){
     // Time Delay
     /*
@@ -108,15 +111,46 @@ int main(){
     //_sleep(50);
     */
     Sleep(50);
+    nSpeedCounter++;
+    bForceDown = (nSpeed == nSpeedCounter);
 
     // Input :
     for(int i=0;i<4;i++)
-      bKey[i] = (0x8000 & GetAsyncKeyState((unsigned char)("\x27\x25\x28Z"[i]))) != 0;
+      bKey[i] = (0X8000 & GetAsyncKeyState((unsigned char)("\x27\x25\x28Z"[i]))) != 0;
     // Game Logic
-    nCurrentX=nCurrentX-((bKey[1])&&(DoesPieceFit(nCurrentPiece,nCurrentRotation,nCurrentX-1,nCurrentY)) ? 1 : 0 );
-    nCurrentX=nCurrentX+((bKey[0])&&(DoesPieceFit(nCurrentPiece,nCurrentRotation,nCurrentX+1,nCurrentY)) ? 1 : 0 );
-    nCurrentY=nCurrentY+((bKey[2])&&(DoesPieceFit(nCurrentPiece,nCurrentRotation,nCurrentX,nCurrentY+1)) ? 1 : 0 );
-    nCurrentRotation=nCurrentRotation+((bKey[3])&&(DoesPieceFit(nCurrentPiece,nCurrentRotation+1,nCurrentX,nCurrentY+1)) ? 1 : 0 );
+    nCurrentX-=(bKey[1] && DoesPieceFit(nCurrentPiece,nCurrentRotation,nCurrentX-1,nCurrentY)) ? 1 : 0 ;
+    nCurrentX+=(bKey[0] && DoesPieceFit(nCurrentPiece,nCurrentRotation,nCurrentX+1,nCurrentY)) ? 1 : 0 ;
+    nCurrentY+=(bKey[2] && DoesPieceFit(nCurrentPiece,nCurrentRotation,nCurrentX,nCurrentY+1)) ? 1 : 0 ;
+    //nCurrentRotation=nCurrentRotation+((bKey[3])&&(DoesPieceFit(nCurrentPiece,nCurrentRotation+1,nCurrentX,nCurrentY+1)) ? 1 : 0 );
+    if((bKey[3])){
+      nCurrentRotation+=(!brotateHold && DoesPieceFit(nCurrentPiece,nCurrentRotation+1,nCurrentX,nCurrentY)) ? 1 : 0 ;
+      brotateHold=true;
+    }else{
+      brotateHold=false;
+    }
+
+    if(bForceDown){
+      if(DoesPieceFit(nCurrentPiece,nCurrentRotation,nCurrentX,nCurrentY+1)){
+          nCurrentY++;
+      }else{
+        // Line Check
+        for(int px=0 ; px < 4 ; px++){
+           for(int py=0 ; py < 4 ; py++){
+                if(tetromino[nCurrentPiece][rotate(px,py,nCurrentRotation)] == L'X'){
+                  pField[(nCurrentY + py)*nFieldWidth+(nCurrentX + px)] = nCurrentPiece + 1;
+                }
+            }
+          }
+        // Next piece
+        nCurrentX = (nFieldWidth/2);
+        nCurrentY = 0;
+        nCurrentRotation = 0;
+        nCurrentPiece = rand() % 7;
+        // Game Over
+        bGameOver=!DoesPieceFit(nCurrentPiece,nCurrentRotation,nCurrentX,nCurrentY);
+      }
+      nSpeedCounter=0;
+    }
 
     // Play Field
     for(int x=0 ; x < nFieldWidth ; x++){
@@ -136,5 +170,6 @@ int main(){
       WriteConsoleOutputCharacter(hConsole,screen,nScreenWidth*nScreenHeight,{0,0},&dwBytesWritten);
 		//break;
 	}
+  cout<<"Game Over !!!!";
   return 0;
 }
